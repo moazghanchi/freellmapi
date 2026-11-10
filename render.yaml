@@ -1,0 +1,32 @@
+# FreeLLMAPI on Render (free tier)
+# Deploy with one tap:
+# https://render.com/deploy?repo=https://github.com/moazghanchi/freellmapi
+#
+# Notes (verified against the repo 2026-11-10):
+# - The Dockerfile is PaaS-ready (Render/Railway): CMD is
+#   `node server/dist/index.js`, the server reads PORT from the environment,
+#   and its own healthcheck hits /api/ping - so Render injects PORT and
+#   healthCheckPath /api/ping just works. Do NOT set PORT in this file.
+# - ENCRYPTION_KEY is required in production and must stay stable, or stored
+#   provider keys stop decrypting after a restart. It is sync: false, so
+#   Render asks for the value on first deploy - paste the key given in chat.
+#   It is deliberately NOT written here, so the public fork holds no secret.
+# - Render free has no persistent disk: the SQLite DB in /app/server/data
+#   survives sleeps/restarts but is wiped on redeploy. After a redeploy,
+#   re-add provider keys on the Keys page (the encryption key env var stays).
+# - First-run safety: creating the first dashboard account on a public URL
+#   also needs a one-time setup code printed in the Render logs at startup
+#   while no account exists. Copy it from Logs and enter it on the dashboard.
+
+services:
+  - type: web
+    name: freellmapi
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/ping
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENCRYPTION_KEY
+        sync: false
